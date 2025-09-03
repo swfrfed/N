@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>С Днём Рождения, Настя!</title>
+    <!-- Подключаем дерзкий и современный шрифт -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* --- НОВЫЙ ДИЗАЙН: ОБЩИE СТИЛИ И ПЕРЕМЕННЫЕ (BLACK & ORANGE) --- */
+        :root {
+            --orange: #ff9d00;
+            --dark-orange: #e65c00;
+            --black: #0d0d0d;
+            --dark-grey: #1a1a1a;
+            --glow-color: rgba(255, 157, 0, 0.7);
+            --text-color: #f0f0f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            color: var(--text-color);
+            overflow-x: hidden;
+            background: var(--black);
+        }
+        
+        /* Канвас для парящих частиц на заднем плане */
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* --- ИНДИКАТОР ПРОКРУТКИ --- */
+        #scroll-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 5px;
+            background: var(--orange);
+            width: 0%;
+            z-index: 1000;
+            transition: width 0.1s ease-out;
+            box-shadow: 0 0 10px var(--glow-color);
+        }
+        
+        /* --- СТИЛИ КОНТЕНТА --- */
+        .container {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .scroll-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            width: 100%;
+            text-align: center;
+        }
+        
+        /* Стили для заголовков */
+        h1 {
+            font-size: clamp(3rem, 12vw, 8rem);
+            font-weight: 900;
+            color: var(--orange);
+            text-transform: uppercase;
+            text-shadow: 0 0 10px var(--glow-color), 0 0 20px var(--glow-color), 0 0 40px var(--dark-orange);
+            animation: flicker 3s infinite alternate;
+        }
+
+        @keyframes flicker {
+            0%, 18%, 22%, 25%, 53%, 57%, 100% {
+                text-shadow:
+                0 0 4px var(--orange),
+                0 0 11px var(--orange),
+                0 0 19px var(--orange),
+                0 0 40px var(--dark-orange),
+                0 0 80px var(--dark-orange);
+            }
+            20%, 24%, 55% { text-shadow: none; }
+        }
+
+        h2 {
+            font-size: clamp(1.8rem, 8vw, 4rem);
+            font-weight: 700;
+            color: var(--text-color);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* --- НОВАЯ СТРУКТУРА: СЕТКА КАРТОЧЕК --- */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            width: 100%;
+            max-width: 1200px;
+            padding: 50px 0;
+        }
+
+        .card {
+            background: var(--dark-grey);
+            border: 1px solid #333;
+            padding: 40px 20px;
+            border-radius: 15px;
+            min-height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease, opacity 0.5s ease, transform 0.5s ease;
+            opacity: 0; /* Для анимации появления */
+            transform: translateY(40px);
+        }
+        
+        .card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .card:hover {
+            transform: translateY(-10px) scale(1.03);
+            border-color: var(--orange);
+            box-shadow: 0 0 25px var(--glow-color);
+        }
+        
+        .card h2 {
+            font-size: clamp(1.5rem, 5vw, 2.2rem);
+        }
+        
+        /* Стилизация разных карточек */
+        .card-1 { transition-delay: 100ms; }
+        .card-2 { transition-delay: 200ms; }
+        .card-3 { transition-delay: 300ms; }
+        .card-4 { transition-delay: 400ms; }
+        .card-5 { transition-delay: 500ms; }
+        .card-6 { transition-delay: 600ms; }
+
+        /* --- МУЗЫКАЛЬНЫЙ ПЛЕЕР --- */
+        .music-player-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        #song-title {
+            color: var(--orange);
+            font-size: 1rem;
+            font-weight: 700;
+            text-shadow: 0 0 5px var(--glow-color);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        #song-title.visible {
+            opacity: 1;
+        }
+        #play-pause-btn {
+            width: 60px; height: 60px; background-color: var(--dark-grey); color: var(--orange);
+            border: 2px solid var(--orange); border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; cursor: pointer;
+            transition: all 0.3s ease; box-shadow: 0 0 15px var(--glow-color);
+        }
+        #play-pause-btn:hover { transform: scale(1.1); background-color: var(--orange); color: var(--black); }
+        #play-pause-btn svg { width: 30px; height: 30px; }
+        .playing .play-icon, .paused .pause-icon { display: none; }
+        .playing .pause-icon, .paused .play-icon { display: block; }
+        
+        /* --- GEMINI API FEATURE --- */
+        .gemini-feature {
+            background: var(--dark-grey);
+            border: 1px solid #333;
+            border-radius: 15px;
+            padding: 40px;
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .gemini-feature.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .gemini-feature h2 {
+            color: var(--orange);
+            text-shadow: 0 0 10px var(--glow-color);
+            margin-bottom: 0;
+        }
+        .gemini-feature p {
+            font-size: 1rem;
+            color: #aaa;
+            font-weight: 400;
+            margin-bottom: 10px;
+        }
+        #gemini-prompt {
+            width: 100%;
+            min-height: 80px;
+            background: var(--black);
+            border: 1px solid #444;
+            border-radius: 10px;
+            color: var(--text-color);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1rem;
+            padding: 15px;
+            resize: vertical;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        #gemini-prompt:focus {
+            outline: none;
+            border-color: var(--orange);
+            box-shadow: 0 0 15px var(--glow-color);
+        }
+        #gemini-btn {
+            background: var(--orange);
+            color: var(--black);
+            border: none;
+            border-radius: 10px;
+            padding: 15px 30px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        #gemini-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px var(--glow-color);
+        }
+        #gemini-result-container {
+            width: 100%;
+            min-height: 120px;
+            margin-top: 20px;
+            background: var(--black);
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #gemini-result {
+            white-space: pre-wrap; /* To preserve line breaks from the AI */
+            font-size: 1.1rem;
+            line-height: 1.6;
+            font-weight: 400;
+            color: var(--text-color);
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.5s, transform 0.5s;
+        }
+        #gemini-result.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .loader {
+            border: 4px solid #333;
+            border-top: 4px solid var(--orange);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* --- ФИНАЛЬНЫЙ БЛОК --- */
+        .final-card {
+            background: transparent;
+            border-top: 2px solid var(--orange);
+            border-bottom: 2px solid var(--orange);
+            padding: 50px;
+            width: 100%;
+            max-width: 900px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5) inset;
+        }
+        .final-card h2 {
+            color: var(--orange);
+            text-shadow: 0 0 10px var(--glow-color);
+            margin-bottom: 20px;
+        }
+        .final-card p {
+            font-size: clamp(1rem, 3vw, 1.2rem);
+            line-height: 1.7;
+            font-weight: 400;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* --- ЭФФЕКТ КОНФЕТТИ ПРИ КЛИКЕ --- */
+        .confetti {
+            position: fixed; width: 10px; height: 10px; opacity: 1;
+            pointer-events: none; animation: fly 1.5s ease-out forwards;
+        }
+        @keyframes fly {
+            0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+            100% { transform: translate(var(--x), 200px) rotate(360deg); opacity: 0; }
+        }
+
+    </style>
+</head>
+<body>
+    <div id="scroll-progress"></div>
+    <canvas id="particle-canvas"></canvas>
+
+    <audio id="birthday-song" loop>
+        <source src="https://archive.org/download/neverland-steal-alcohol/nEverland%20-%20%D0%92%D0%BE%D1%80%D1%83%D1%8E%20%D0%B0%D0%BB%D0%BA%D0%BE%D0%B3%D0%BE%D0%BB%D1%8C.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <div class="music-player-container">
+        <div id="song-title">n'Everland - Ворую Алкоголь</div>
+        <button id="play-pause-btn" class="paused">
+            <svg class="play-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
+            <svg class="pause-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path></svg>
+        </button>
+    </div>
+
+    <div class="container">
+        <!-- ГЛАВНЫЙ ЭКРАН -->
+        <section class="scroll-section">
+            <h1>С днём рождения, Настя!</h1>
+        </section>
+        
+        <!-- СЕТКА С КОМПЛИМЕНТАМИ -->
+        <section class="scroll-section">
+            <div class="cards-grid">
+                <div class="card card-1"><h2>Шикарная мама</h2></div>
+                <div class="card card-2"><h2>Повелитель агро мали</h2></div>
+                <div class="card card-3"><h2>Красатулька</h2></div>
+                <div class="card card-4"><h2>Богиня Юли</h2></div>
+                <div class="card card-5"><h2>Источник вдохновения</h2></div>
+                <div class="card card-6"><h2>Королева вечеринок</h2></div>
+            </div>
+        </section>
+        
+        <!-- ПРОМЕЖУТОЧНЫЙ БЛОК -->
+        <section class="scroll-section">
+            <h2>Всегда на стиле</h2>
+        </section>
+
+        <!-- ВТОРАЯ СЕТКА -->
+         <section class="scroll-section">
+            <div class="cards-grid">
+                <div class="card card-1"><h2>Сияй ярче звезд</h2></div>
+                <div class="card card-2"><h2>Энергия и огонь</h2></div>
+                <div class="card card-3"><h2>Самая лучшая</h2></div>
+                <div class="card card-4"><h2>Душа компании</h2></div>
+                <div class="card card-5"><h2>Генератор идей</h2></div>
+                <div class="card card-6"><h2>Просто космос!</h2></div>
+            </div>
+        </section>
+
+        <!-- ТРЕТЬЯ СЕТКА (НОВЫЙ БЛОК) -->
+        <section class="scroll-section">
+            <div class="cards-grid">
+                <div class="card card-1"><h2>Взгляд, что сводит с ума</h2></div>
+                <div class="card card-2"><h2>Чувство юмора — топ</h2></div>
+                <div class="card card-3"><h2>С тобой хоть на край света</h2></div>
+                <div class="card card-4"><h2>Мастер на все руки</h2></div>
+                <div class="card card-5"><h2>Источник дикой энергии</h2></div>
+                <div class="card card-6"><h2>Сама себе праздник</h2></div>
+            </div>
+        </section>
+        
+        <!-- GEMINI API FEATURE BLOCK -->
+        <section class="scroll-section">
+            <div class="gemini-feature">
+                <h2>✨ Генератор Поздравлений</h2>
+                <p>Напишите пару слов о Насте, и AI создаст для неё уникальное поздравление!</p>
+                <textarea id="gemini-prompt" rows="3" placeholder="Например: любит путешествия, смеяться и кошек..."></textarea>
+                <button id="gemini-btn">Создать Волшебство</button>
+                <div id="gemini-result-container">
+                    <div class="loader" style="display: none;"></div>
+                    <div id="gemini-result"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ФИНАЛЬНЫЙ БЛОК -->
+        <section class="scroll-section">
+            <div class="final-card">
+                <h2>Настя,</h2>
+                <p>Этот день — только твой! Пусть он будет наполнен улыбками, теплом и самыми приятными сюрпризами. Оставайся такой же невероятной, яркой и вдохновляющей. Пусть все твои самые смелые мечты станут реальностью!</p>
+                <br>
+                <p><strong>С огромной любовью и самыми тёплыми пожеланиями!</strong></p>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            /** 1. АНИМАЦИЯ ПОЯВЛЕНИЯ ЭЛЕМЕНТОВ ПРИ ПРОКРУТКЕ */
+            const animatedItems = document.querySelectorAll('.card, .final-card, h1, h2, .gemini-feature');
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.2 };
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, observerOptions);
+            animatedItems.forEach(item => observer.observe(item));
+
+            /** 2. АНИМАЦИЯ ПАРЯЩИХ ЧАСТИЦ НА ФОНЕ */
+            const canvas = document.getElementById('particle-canvas');
+            const ctx = canvas.getContext('2d');
+            let particlesArray = [];
+            const numberOfParticles = 120;
+
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                initParticles();
+            }
+
+            class Particle {
+                constructor() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                    this.size = Math.random() * 2.5 + 1;
+                    this.speedX = (Math.random() - 0.5) * 0.4;
+                    this.speedY = (Math.random() - 0.5) * 0.4;
+                    this.color = `rgba(255, 157, 0, ${Math.random() * 0.6 + 0.2})`;
+                }
+                update() {
+                    if (this.x > canvas.width || this.x < 0) this.speedX *= -1;
+                    if (this.y > canvas.height || this.y < 0) this.speedY *= -1;
+                    this.x += this.speedX; this.y += this.speedY;
+                }
+                draw() {
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            function initParticles() {
+                particlesArray = [];
+                for (let i = 0; i < numberOfParticles; i++) {
+                    particlesArray.push(new Particle());
+                }
+            }
+
+            function animateParticles() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particlesArray.forEach(p => { p.update(); p.draw(); });
+                requestAnimationFrame(animateParticles);
+            }
+            
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+            animateParticles();
+
+            /** 3. ЭФФЕКТ КОНФЕТТИ ПРИ КЛИКЕ */
+            document.addEventListener('click', (e) => {
+                if (e.target.closest('#play-pause-btn')) return;
+                for (let i = 0; i < 25; i++) { createConfetti(e.clientX, e.clientY); }
+            });
+
+            function createConfetti(x, y) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                const randomX = (Math.random() - 0.5) * 400;
+                const randomShape = Math.random() > 0.5 ? '50%' : '0';
+                const randomSize = Math.random() * 10 + 5;
+                confetti.style.left = `${x}px`;
+                confetti.style.top = `${y}px`;
+                confetti.style.setProperty('--x', `${randomX}px`);
+                confetti.style.width = `${randomSize}px`;
+                confetti.style.height = `${randomSize}px`;
+                confetti.style.borderRadius = randomShape;
+                const confettiColors = ['#ff9d00', '#e65c00', '#f0f0f0'];
+                confetti.style.backgroundColor = confettiColors[Math.floor(Math.random() * confettiColors.length)];
+                document.body.appendChild(confetti);
+                setTimeout(() => confetti.remove(), 1500);
+            }
+
+            /** 4. УПРАВЛЕНИЕ МУЗЫКОЙ */
+            const song = document.getElementById('birthday-song');
+            const playBtn = document.getElementById('play-pause-btn');
+            const songTitle = document.getElementById('song-title');
+
+            playBtn.addEventListener('click', () => {
+                if (song.paused) { song.play().catch(e => console.error("Autoplay was prevented.", e)); } 
+                else { song.pause(); }
+            });
+
+            song.onplay = () => {
+                playBtn.className = 'playing';
+                songTitle.classList.add('visible');
+            };
+            song.onpause = () => {
+                playBtn.className = 'paused';
+                songTitle.classList.remove('visible');
+            };
+
+            /** 5. ИНДИКАТОР ПРОГРЕССА ПРОКРУТКИ */
+            const scrollProgressBar = document.getElementById('scroll-progress');
+            window.addEventListener('scroll', () => {
+                const totalHeight = document.body.scrollHeight - window.innerHeight;
+                if (totalHeight <= 0) return;
+                const progress = (window.pageYOffset / totalHeight) * 100;
+                scrollProgressBar.style.width = `${progress}%`;
+            });
+            
+            /** 6. GEMINI API - ГЕНЕРАТОР ПОЗДРАВЛЕНИЙ */
+            const geminiBtn = document.getElementById('gemini-btn');
+            const geminiPromptInput = document.getElementById('gemini-prompt');
+            const geminiResultContainer = document.getElementById('gemini-result-container');
+            const geminiResultEl = document.getElementById('gemini-result');
+            const loader = document.querySelector('#gemini-result-container .loader');
+
+            geminiBtn.addEventListener('click', handleGeminiGenerate);
+
+            async function handleGeminiGenerate() {
+                const userInput = geminiPromptInput.value.trim();
+                if (!userInput) {
+                    geminiResultEl.textContent = "Пожалуйста, напишите что-нибудь о Насте :)";
+                    geminiResultEl.classList.add('visible');
+                    return;
+                }
+
+                loader.style.display = 'block';
+                geminiResultEl.classList.remove('visible');
+                geminiResultEl.textContent = '';
+
+                const apiKey = ""; // API-ключ обрабатывается средой выполнения
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                
+                const systemPrompt = "Ты — дружелюбный и талантливый поэт. Твоя задача — написать короткое, тёплое и красивое поздравление с днём рождения в стихах на русском языке для девушки по имени Настя. Используй информацию о ней, чтобы сделать стихотворение более личным. Стихотворение должно быть 4-6 строк, не больше. Отвечай только стихотворением, без лишних фраз.";
+                const userQuery = `Вот информация о Насте: ${userInput}`;
+
+                const payload = {
+                    systemInstruction: {
+                        parts: [{ text: systemPrompt }]
+                    },
+                    contents: [{
+                        parts: [{ text: userQuery }]
+                    }]
+                };
+                
+                try {
+                    // Имитация сетевой задержки для демонстрации лоадера
+                    await new Promise(resolve => setTimeout(resolve, 500));
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+                    }
+
+                    const result = await response.json();
+                    const candidate = result.candidates?.[0];
+                    const generatedText = candidate?.content?.parts?.[0]?.text;
+
+                    if (generatedText) {
+                        geminiResultEl.textContent = generatedText;
+                    } else {
+                        geminiResultEl.textContent = "Не удалось создать поздравление. Попробуйте снова.";
+                    }
+
+                } catch (error) {
+                    console.error("Gemini API call failed:", error);
+                    geminiResultEl.textContent = "Произошла ошибка. Пожалуйста, попробуйте позже.";
+                } finally {
+                    loader.style.display = 'none';
+                    geminiResultEl.classList.add('visible');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+
